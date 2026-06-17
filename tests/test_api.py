@@ -1,18 +1,20 @@
 """Basic API tests."""
-import pytest
-from httpx import AsyncClient, ASGITransport
+
 from unittest.mock import patch
+
+import pytest
+from httpx import ASGITransport, AsyncClient
 
 from app.main import app
 from app.models import AnalyzeResponse, TopicAnalysis
 
 MOCK_RESPONSE = AnalyzeResponse(
-    text             = "The professor explains very clearly",
-    sentiment        = "positive",
-    score            = 0.85,
-    topics           = ["methodology"],
-    topic_polarity   = [TopicAnalysis(topic="methodology", polarity="positive")],
-    suggested_action = "Keep current teaching methodology",
+    text="The professor explains very clearly",
+    sentiment="positive",
+    score=0.85,
+    topics=["methodology"],
+    topic_polarity=[TopicAnalysis(topic="methodology", polarity="positive")],
+    suggested_action="Keep current teaching methodology",
 )
 
 
@@ -32,9 +34,9 @@ async def test_analyze_ok():
         async with AsyncClient(
             transport=ASGITransport(app=app), base_url="http://test"
         ) as client:
-            r = await client.post("/analyze", json={
-                "text": "The professor explains very clearly"
-            })
+            r = await client.post(
+                "/analyze", json={"text": "The professor explains very clearly"}
+            )
     assert r.status_code == 200
     data = r.json()
     assert data["sentiment"] == "positive"
@@ -56,34 +58,30 @@ async def test_batch_ok():
         async with AsyncClient(
             transport=ASGITransport(app=app), base_url="http://test"
         ) as client:
-            r = await client.post("/analyze/batch", json={
-                "comments": [
-                    {"text": "The professor explains very clearly"},
-                    {"text": "Assessments are too difficult and unclear"},
-                ]
-            })
+            r = await client.post(
+                "/analyze/batch",
+                json={
+                    "comments": [
+                        {"text": "The professor explains very clearly"},
+                        {"text": "Assessments are too difficult and unclear"},
+                    ]
+                },
+            )
     assert r.status_code == 200
     data = r.json()
     assert data["total"] == 2
     assert "avg_score" in data["summary"]
 
+
 @pytest.mark.asyncio
 async def test_analyze_model_error():
 
-    with patch(
-        "app.main.analyze_comment",
-        side_effect=Exception("Gemini unavailable")
-    ):
+    with patch("app.main.analyze_comment", side_effect=Exception("Gemini unavailable")):
         async with AsyncClient(
-            transport=ASGITransport(app=app),
-            base_url="http://test"
+            transport=ASGITransport(app=app), base_url="http://test"
         ) as client:
-
             r = await client.post(
-                "/analyze",
-                json={
-                    "text": "The professor explains very clearly"
-                }
+                "/analyze", json={"text": "The professor explains very clearly"}
             )
 
     assert r.status_code == 502
@@ -93,23 +91,18 @@ async def test_analyze_model_error():
 @pytest.mark.asyncio
 async def test_batch_all_fail():
 
-    with patch(
-        "app.main.analyze_comment",
-        side_effect=Exception("Gemini unavailable")
-    ):
+    with patch("app.main.analyze_comment", side_effect=Exception("Gemini unavailable")):
         async with AsyncClient(
-            transport=ASGITransport(app=app),
-            base_url="http://test"
+            transport=ASGITransport(app=app), base_url="http://test"
         ) as client:
-
             r = await client.post(
                 "/analyze/batch",
                 json={
                     "comments": [
                         {"text": "Comment number one"},
-                        {"text": "Comment number two"}
+                        {"text": "Comment number two"},
                     ]
-                }
+                },
             )
 
     assert r.status_code == 502

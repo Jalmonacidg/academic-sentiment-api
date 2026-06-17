@@ -2,9 +2,11 @@
 Sentiment analysis engine using Gemini.
 Processes plain text only — no personal data.
 """
+
 from __future__ import annotations
 
 import json
+
 from google import genai
 
 from app.config import GEMINI_API_KEY, GEMINI_MODEL, VALID_TOPICS
@@ -51,17 +53,17 @@ async def analyze_comment(
     Analyzes a comment and returns sentiment, topics and suggested action.
     SECURITY: Receives plain text only — no IDs or personal data.
     """
-    ctx     = context or "teaching evaluation comment"
-    prompt  = PROMPT_TEMPLATE.format(
-        text    = text[:1000],
-        context = ctx,
-        topics  = ", ".join(VALID_TOPICS),
+    ctx = context or "teaching evaluation comment"
+    prompt = PROMPT_TEMPLATE.format(
+        text=text[:1000],
+        context=ctx,
+        topics=", ".join(VALID_TOPICS),
     )
 
-    client   = get_client()
+    client = get_client()
     response = client.models.generate_content(
-        model    = GEMINI_MODEL,
-        contents = prompt,
+        model=GEMINI_MODEL,
+        contents=prompt,
     )
 
     raw = response.text.strip()
@@ -82,15 +84,11 @@ async def analyze_comment(
     ]
 
     return AnalyzeResponse(
-        text             = text,
-        sentiment        = data.get("sentiment", "neutral"),
-        score            = float(data.get("score", 0.5)),
-        topics           = [
-                                t
-                                for t in data.get("topics", [])
-                                if t in VALID_TOPICS
-                            ],
-        topic_polarity   = topic_polarity,
-        suggested_action = data.get("suggested_action", "No action suggested"),
-        context          = context,
+        text=text,
+        sentiment=data.get("sentiment", "neutral"),
+        score=float(data.get("score", 0.5)),
+        topics=[t for t in data.get("topics", []) if t in VALID_TOPICS],
+        topic_polarity=topic_polarity,
+        suggested_action=data.get("suggested_action", "No action suggested"),
+        context=context,
     )
