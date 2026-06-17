@@ -1,6 +1,12 @@
 """Pydantic models for request/response."""
+from enum import Enum
 from pydantic import BaseModel, Field
 
+class Sentiment(str, Enum):
+    positive = "positive"
+    negative = "negative"
+    neutral  = "neutral"
+    mixed    = "mixed"
 
 class AnalyzeRequest(BaseModel):
     text:          str = Field(..., min_length=5, max_length=2000,

@@ -66,3 +66,51 @@ async def test_batch_ok():
     data = r.json()
     assert data["total"] == 2
     assert "avg_score" in data["summary"]
+
+@pytest.mark.asyncio
+async def test_analyze_model_error():
+
+    with patch(
+        "app.main.analyze_comment",
+        side_effect=Exception("Gemini unavailable")
+    ):
+        async with AsyncClient(
+            transport=ASGITransport(app=app),
+            base_url="http://test"
+        ) as client:
+
+            r = await client.post(
+                "/analyze",
+                json={
+                    "text": "The professor explains very clearly"
+                }
+            )
+
+    assert r.status_code == 502
+    assert "Model error" in r.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_batch_all_fail():
+
+    with patch(
+        "app.main.analyze_comment",
+        side_effect=Exception("Gemini unavailable")
+    ):
+        async with AsyncClient(
+            transport=ASGITransport(app=app),
+            base_url="http://test"
+        ) as client:
+
+            r = await client.post(
+                "/analyze/batch",
+                json={
+                    "comments": [
+                        {"text": "Comment number one"},
+                        {"text": "Comment number two"}
+                    ]
+                }
+            )
+
+    assert r.status_code == 502
+    assert r.json()["detail"] == "Could not analyze any comment"

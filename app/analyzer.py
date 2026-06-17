@@ -71,7 +71,10 @@ async def analyze_comment(
             raw = raw[4:]
     raw = raw.strip()
 
-    data = json.loads(raw)
+    try:
+        data = json.loads(raw)
+    except Exception:
+        raise ValueError(f"Invalid JSON from Gemini: {raw}")
 
     topic_polarity = [
         TopicAnalysis(topic=t["topic"], polarity=t["polarity"])
@@ -82,7 +85,11 @@ async def analyze_comment(
         text             = text,
         sentiment        = data.get("sentiment", "neutral"),
         score            = float(data.get("score", 0.5)),
-        topics           = data.get("topics", []),
+        topics           = [
+                                t
+                                for t in data.get("topics", [])
+                                if t in VALID_TOPICS
+                            ],
         topic_polarity   = topic_polarity,
         suggested_action = data.get("suggested_action", "No action suggested"),
         context          = context,
