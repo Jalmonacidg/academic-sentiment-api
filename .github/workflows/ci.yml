@@ -29,10 +29,10 @@ jobs:
         run: uv sync --frozen --dev
 
       - name: Run ruff (lint)
-        run: ruff check .
+        run: uv run ruff check .
 
       - name: Run ruff (format check)
-        run: ruff format --check .
+        run: uv run ruff format --check .
 
   test:
     name: Test
@@ -52,7 +52,7 @@ jobs:
         run: uv sync --frozen --dev
 
       - name: Run pytest
-        run: pytest --tb=short -q
+        run: uv run pytest --tb=short -q
 
   build-and-push:
     name: Build & Push to GHCR
